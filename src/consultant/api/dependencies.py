@@ -7,6 +7,8 @@ from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
 
+from consultant.adapters.llm.fake_embeddings import FakeEmbeddingProvider
+from consultant.adapters.retrieval.fake_reranker import TokenOverlapReranker
 from consultant.adapters.storage.memory import InMemoryObjectStore
 from consultant.application.ingestion import InMemoryDocumentCatalog
 from consultant.application.projects import Identity, InMemoryProjectStore
@@ -64,6 +66,14 @@ def get_object_store(request: Request) -> InMemoryObjectStore:
     return cast(InMemoryObjectStore, request.app.state.object_store)
 
 
+def get_embedding_provider(request: Request) -> FakeEmbeddingProvider:
+    return cast(FakeEmbeddingProvider, request.app.state.embedding_provider)
+
+
+def get_reranker(request: Request) -> TokenOverlapReranker:
+    return cast(TokenOverlapReranker, request.app.state.reranker)
+
+
 RequestSettings = Annotated[Settings, Depends(get_settings_from_request)]
 
 
@@ -84,3 +94,5 @@ CurrentIdentity = Annotated[Identity, Depends(get_identity)]
 ProjectStore = Annotated[InMemoryProjectStore, Depends(get_project_store)]
 DocumentCatalog = Annotated[InMemoryDocumentCatalog, Depends(get_document_catalog)]
 MemoryObjectStore = Annotated[InMemoryObjectStore, Depends(get_object_store)]
+Embeddings = Annotated[FakeEmbeddingProvider, Depends(get_embedding_provider)]
+RetrievalReranker = Annotated[TokenOverlapReranker, Depends(get_reranker)]

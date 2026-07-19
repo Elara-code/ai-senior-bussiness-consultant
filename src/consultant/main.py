@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from consultant.adapters.llm.fake_embeddings import FakeEmbeddingProvider
+from consultant.adapters.retrieval.fake_reranker import TokenOverlapReranker
 from consultant.adapters.storage.memory import InMemoryObjectStore
 from consultant.api.errors import install_error_handlers
 from consultant.api.v1.router import router as api_v1_router
@@ -18,6 +20,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.project_store = InMemoryProjectStore()
     application.state.document_catalog = InMemoryDocumentCatalog()
     application.state.object_store = InMemoryObjectStore()
+    application.state.embedding_provider = FakeEmbeddingProvider(dimensions=16)
+    application.state.reranker = TokenOverlapReranker()
     application.include_router(api_v1_router)
     install_error_handlers(application)
 
