@@ -16,6 +16,12 @@ class ProjectStage(StrEnum):
     CLOSED = "closed"
 
 
+class ProjectRole(StrEnum):
+    OWNER = "owner"
+    CONSULTANT = "consultant"
+    VIEWER = "viewer"
+
+
 _STAGE_TRANSITIONS: dict[ProjectStage, frozenset[ProjectStage]] = {
     ProjectStage.DISCOVERY: frozenset({ProjectStage.REQUIREMENTS, ProjectStage.CLOSED}),
     ProjectStage.REQUIREMENTS: frozenset(

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://consultant:consultant@localhost:5432/consultant"
     embedding_dimensions: int = Field(default=1536, gt=0, le=4096)
     auth_mode: Literal["development", "oidc"] = "development"
+    development_auth_secret: str = Field(default="local-development-only", min_length=16)
+    max_upload_bytes: int = Field(default=25 * 1024 * 1024, gt=0)
 
 
 @lru_cache

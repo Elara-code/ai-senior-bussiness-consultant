@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
 from consultant.domain.common import (
     Conflict,
     DomainError,
@@ -31,3 +34,21 @@ def problem_for(error: DomainError) -> ProblemSpec:
         if isinstance(error, error_type):
             return problem
     return ProblemSpec(409, "DOMAIN_ERROR", "Domain rule rejected the operation")
+
+
+def install_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(DomainError)
+    async def handle_domain_error(request: Request, error: DomainError) -> JSONResponse:
+        problem = problem_for(error)
+        return JSONResponse(
+            status_code=problem.status,
+            media_type="application/problem+json",
+            content={
+                "type": f"https://internal.example/problems/{problem.code.lower()}",
+                "title": problem.title,
+                "status": problem.status,
+                "detail": str(error),
+                "instance": request.url.path,
+                "code": problem.code,
+            },
+        )
