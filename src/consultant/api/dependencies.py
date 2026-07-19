@@ -10,6 +10,8 @@ from fastapi import Depends, Header, HTTPException, Request
 from consultant.adapters.llm.fake_embeddings import FakeEmbeddingProvider
 from consultant.adapters.retrieval.fake_reranker import TokenOverlapReranker
 from consultant.adapters.storage.memory import InMemoryObjectStore
+from consultant.application.agent_service import AgentRunService
+from consultant.application.deliverables import InMemoryDeliverableStore
 from consultant.application.ingestion import InMemoryDocumentCatalog
 from consultant.application.projects import Identity, InMemoryProjectStore
 from consultant.config import Settings
@@ -74,6 +76,14 @@ def get_reranker(request: Request) -> TokenOverlapReranker:
     return cast(TokenOverlapReranker, request.app.state.reranker)
 
 
+def get_agent_run_service(request: Request) -> AgentRunService:
+    return cast(AgentRunService, request.app.state.agent_run_service)
+
+
+def get_deliverable_store(request: Request) -> InMemoryDeliverableStore:
+    return cast(InMemoryDeliverableStore, request.app.state.deliverable_store)
+
+
 RequestSettings = Annotated[Settings, Depends(get_settings_from_request)]
 
 
@@ -96,3 +106,5 @@ DocumentCatalog = Annotated[InMemoryDocumentCatalog, Depends(get_document_catalo
 MemoryObjectStore = Annotated[InMemoryObjectStore, Depends(get_object_store)]
 Embeddings = Annotated[FakeEmbeddingProvider, Depends(get_embedding_provider)]
 RetrievalReranker = Annotated[TokenOverlapReranker, Depends(get_reranker)]
+AgentRuns = Annotated[AgentRunService, Depends(get_agent_run_service)]
+DeliverableStore = Annotated[InMemoryDeliverableStore, Depends(get_deliverable_store)]

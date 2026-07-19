@@ -49,6 +49,7 @@ def install_error_handlers(app: FastAPI) -> None:
                 "status": problem.status,
                 "detail": str(error),
                 "instance": request.url.path,
+                "request_id": getattr(request.state, "request_id", None),
                 "code": problem.code,
             },
         )

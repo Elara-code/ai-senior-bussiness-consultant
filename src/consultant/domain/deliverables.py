@@ -14,6 +14,27 @@ class DeliverableKind(StrEnum):
     SOLUTION_DRAFT = "solution_draft"
 
 
+class Deliverable(BaseModel):
+    id: UUID = Field(default_factory=new_id)
+    organization_id: UUID
+    project_id: UUID
+    kind: DeliverableKind
+    title: str = Field(min_length=1, max_length=255)
+    stale: bool = False
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class CitationRecord(BaseModel):
+    id: UUID = Field(default_factory=new_id)
+    organization_id: UUID
+    project_id: UUID
+    revision_id: UUID
+    document_version_id: UUID
+    chunk_id: UUID
+    quote: str = Field(min_length=1, max_length=1200)
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
 class DeliverableRevision(BaseModel):
     id: UUID = Field(default_factory=new_id)
     organization_id: UUID
