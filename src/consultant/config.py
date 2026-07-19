@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     auth_mode: Literal["development", "oidc"] = "development"
     development_auth_secret: str = Field(default="local-development-only", min_length=16)
     max_upload_bytes: int = Field(default=25 * 1024 * 1024, gt=0)
+    auto_execute_jobs: bool = False
 
 
 @lru_cache

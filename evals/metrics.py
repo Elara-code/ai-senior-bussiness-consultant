@@ -1,0 +1,32 @@
+from collections.abc import Sequence
+
+
+def recall_at_k(expected: set[str], retrieved: Sequence[str], k: int) -> float:
+    if not expected:
+        return 1.0
+    if k <= 0:
+        raise ValueError("k must be positive")
+    return len(expected & set(retrieved[:k])) / len(expected)
+
+
+def reciprocal_rank(expected: set[str], retrieved: Sequence[str]) -> float:
+    for rank, item in enumerate(retrieved, start=1):
+        if item in expected:
+            return 1.0 / rank
+    return 0.0 if expected else 1.0
+
+
+def citation_precision(expected: set[str], predicted: set[str]) -> float:
+    if not predicted:
+        return 1.0 if not expected else 0.0
+    return len(expected & predicted) / len(predicted)
+
+
+def citation_coverage(expected: set[str], predicted: set[str]) -> float:
+    if not expected:
+        return 1.0
+    return len(expected & predicted) / len(expected)
+
+
+def mean(values: Sequence[float]) -> float:
+    return sum(values) / len(values) if values else 0.0

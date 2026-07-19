@@ -2,12 +2,13 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile, status
 from pydantic import BaseModel
 
 from consultant.api.dependencies import (
     CurrentIdentity,
     DocumentCatalog,
+    IngestionPipeline,
     MemoryObjectStore,
     ProjectStore,
     RequestSettings,
@@ -43,6 +44,8 @@ async def upload_document(
     catalog: DocumentCatalog,
     object_store: MemoryObjectStore,
     settings: RequestSettings,
+    pipeline: IngestionPipeline,
+    background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File()],
 ) -> DocumentUploadResponse:
     result = await DocumentIngestionService(
@@ -57,6 +60,8 @@ async def upload_document(
         content_type=file.content_type or "application/octet-stream",
         stream=_file_stream(file),
     )
+    if settings.auto_execute_jobs:
+        background_tasks.add_task(pipeline.process, result.version.id)
     return DocumentUploadResponse(
         document_id=result.document.id,
         version_id=result.version.id,

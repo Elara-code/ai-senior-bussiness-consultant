@@ -3,11 +3,11 @@ from collections.abc import AsyncIterator
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, status
+from fastapi import APIRouter, BackgroundTasks, Header, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from consultant.api.dependencies import AgentRuns, CurrentIdentity
+from consultant.api.dependencies import AgentRuns, CurrentIdentity, DemoExecutor, RequestSettings
 from consultant.domain.agent_runs import AgentKind, AgentRun, AgentRunStatus
 from consultant.ports.event_store import RunEvent
 
@@ -63,6 +63,9 @@ async def create_agent_run(
     request: CreateAgentRunRequest,
     identity: CurrentIdentity,
     service: AgentRuns,
+    settings: RequestSettings,
+    executor: DemoExecutor,
+    background_tasks: BackgroundTasks,
     idempotency_key: Annotated[str, Header(min_length=8, max_length=255)],
 ) -> AgentRunResponse:
     run, _ = await service.create(
@@ -72,6 +75,8 @@ async def create_agent_run(
         objective=request.input.objective,
         idempotency_key=idempotency_key,
     )
+    if settings.auto_execute_jobs and run.status == AgentRunStatus.QUEUED:
+        background_tasks.add_task(service.execute, run_id=run.id, runner=executor)
     return _response(run)
 
 

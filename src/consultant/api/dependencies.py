@@ -12,7 +12,9 @@ from consultant.adapters.retrieval.fake_reranker import TokenOverlapReranker
 from consultant.adapters.storage.memory import InMemoryObjectStore
 from consultant.application.agent_service import AgentRunService
 from consultant.application.deliverables import InMemoryDeliverableStore
+from consultant.application.demo import DemoAgentExecutor
 from consultant.application.ingestion import InMemoryDocumentCatalog
+from consultant.application.pipeline import DocumentPipeline
 from consultant.application.projects import Identity, InMemoryProjectStore
 from consultant.config import Settings
 
@@ -84,6 +86,14 @@ def get_deliverable_store(request: Request) -> InMemoryDeliverableStore:
     return cast(InMemoryDeliverableStore, request.app.state.deliverable_store)
 
 
+def get_document_pipeline(request: Request) -> DocumentPipeline:
+    return cast(DocumentPipeline, request.app.state.document_pipeline)
+
+
+def get_demo_agent_executor(request: Request) -> DemoAgentExecutor:
+    return cast(DemoAgentExecutor, request.app.state.demo_agent_executor)
+
+
 RequestSettings = Annotated[Settings, Depends(get_settings_from_request)]
 
 
@@ -108,3 +118,5 @@ Embeddings = Annotated[FakeEmbeddingProvider, Depends(get_embedding_provider)]
 RetrievalReranker = Annotated[TokenOverlapReranker, Depends(get_reranker)]
 AgentRuns = Annotated[AgentRunService, Depends(get_agent_run_service)]
 DeliverableStore = Annotated[InMemoryDeliverableStore, Depends(get_deliverable_store)]
+IngestionPipeline = Annotated[DocumentPipeline, Depends(get_document_pipeline)]
+DemoExecutor = Annotated[DemoAgentExecutor, Depends(get_demo_agent_executor)]

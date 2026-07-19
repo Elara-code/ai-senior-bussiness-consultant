@@ -10,8 +10,11 @@ from consultant.api.v1.router import router as api_v1_router
 from consultant.application.agent_service import AgentRunService
 from consultant.application.audit import InMemoryAuditLog
 from consultant.application.deliverables import InMemoryDeliverableStore
+from consultant.application.demo import DemoAgentExecutor
 from consultant.application.ingestion import InMemoryDocumentCatalog
+from consultant.application.pipeline import DocumentPipeline
 from consultant.application.projects import InMemoryProjectStore
+from consultant.application.retrieval import RetrievalService
 from consultant.config import Settings, get_settings
 
 
@@ -27,6 +30,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.object_store = InMemoryObjectStore()
     application.state.embedding_provider = FakeEmbeddingProvider(dimensions=16)
     application.state.reranker = TokenOverlapReranker()
+    application.state.document_pipeline = DocumentPipeline(
+        catalog=application.state.document_catalog,
+        object_store=application.state.object_store,
+        embeddings=application.state.embedding_provider,
+    )
+    application.state.demo_agent_executor = DemoAgentExecutor(
+        RetrievalService(
+            projects=application.state.project_store,
+            catalog=application.state.document_catalog,
+            embeddings=application.state.embedding_provider,
+            reranker=application.state.reranker,
+        )
+    )
     application.state.agent_run_service = AgentRunService(
         projects=application.state.project_store,
         events=InMemoryEventStore(),
