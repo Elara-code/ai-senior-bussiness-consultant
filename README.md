@@ -7,6 +7,7 @@
 - [产品与系统设计蓝图](docs/plans/2026-07-17-ai-senior-business-consultant-design.md)
 - [阶段一实施计划](docs/plans/2026-07-17-phase-1-implementation-plan.md)
 - [阶段一技术契约](docs/plans/2026-07-17-phase-1-technical-contracts.md)
+- [阶段二业务闭环设计](docs/plans/2026-07-20-phase-2-business-loop-design.md)
 
 ## 建设目标
 
