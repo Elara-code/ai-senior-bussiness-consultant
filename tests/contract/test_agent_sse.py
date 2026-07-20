@@ -40,3 +40,24 @@ def test_sse_supports_event_ids_and_terminal_close() -> None:
     assert "event: run.started" in response.text
     assert "id: 2" in response.text
     assert "event: run.completed" in response.text
+
+    resumed = client.get(
+        f"/api/v1/agent-runs/{run_id}/events", headers={"Last-Event-ID": "1"}
+    )
+    assert "id: 1" not in resumed.text
+    assert "id: 2" in resumed.text
+
+
+def test_only_failed_runs_can_be_retried() -> None:
+    identity = Identity(organization_id=uuid4(), user_id=uuid4(), display_name="Owner")
+    app = create_app(Settings(environment="test", development_auth_secret=SECRET))
+    token = encode_development_token(identity, SECRET)
+    client = TestClient(app, headers={"Authorization": f"Bearer {token}"})
+    project_id = client.post("/api/v1/projects", json={"name": "Customer"}).json()["id"]
+    run = client.post(
+        f"/api/v1/projects/{project_id}/agent-runs",
+        headers={"Idempotency-Key": "retry-request-01"},
+        json={"agent": "requirement_analysis", "input": {"objective": "Analyze"}},
+    ).json()
+    response = client.post(f"/api/v1/agent-runs/{run['id']}:retry")
+    assert response.status_code == 409

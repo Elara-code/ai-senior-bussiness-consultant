@@ -94,6 +94,21 @@ async def cancel_agent_run(
     return _response(await service.cancel(identity=identity, run_id=run_id))
 
 
+@router.post("/agent-runs/{run_id}:retry", response_model=AgentRunResponse)
+async def retry_agent_run(
+    run_id: UUID,
+    identity: CurrentIdentity,
+    service: AgentRuns,
+    settings: RequestSettings,
+    executor: DemoExecutor,
+    background_tasks: BackgroundTasks,
+) -> AgentRunResponse:
+    run = await service.requeue(identity=identity, run_id=run_id)
+    if settings.auto_execute_jobs:
+        background_tasks.add_task(service.execute, run_id=run.id, runner=executor)
+    return _response(run)
+
+
 @router.get("/agent-runs/{run_id}/events")
 def stream_agent_run_events(
     run_id: UUID,

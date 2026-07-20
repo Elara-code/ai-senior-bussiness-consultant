@@ -136,6 +136,17 @@ class AgentRunService:
         await self._publish(run, "run.cancelled", {"status": run.status.value})
         return run.model_copy(deep=True)
 
+    async def requeue(self, *, identity: Identity, run_id: UUID) -> AgentRun:
+        run = self._require(run_id)
+        self._projects.get_visible(identity=identity, project_id=run.project_id)
+        if run.organization_id != identity.organization_id:
+            raise NotFound("Agent run not found")
+        if run.status != AgentRunStatus.FAILED:
+            raise Conflict("Only failed agent runs can be retried")
+        run.transition_to(AgentRunStatus.QUEUED)
+        await self._publish(run, "run.retry_queued", {"status": run.status.value})
+        return run.model_copy(deep=True)
+
     def result(self, run_id: UUID) -> dict[str, Any] | None:
         return self._results.get(run_id)
 
