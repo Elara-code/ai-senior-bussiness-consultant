@@ -8,6 +8,8 @@ from consultant.domain.business_loop import BusinessObjectKind, VersionedBusines
 class BusinessObjectRepository(Protocol):
     async def add(self, item: VersionedBusinessObject) -> None: ...
 
+    async def save_state(self, item: VersionedBusinessObject) -> None: ...
+
     async def get_latest(
         self,
         *,
@@ -30,4 +32,13 @@ class BusinessObjectRepository(Protocol):
         organization_id: UUID,
         project_id: UUID,
         item_ids: set[UUID],
+    ) -> None: ...
+
+    async def link_dependencies(
+        self,
+        *,
+        organization_id: UUID,
+        project_id: UUID,
+        upstream_ids: set[UUID],
+        downstream_id: UUID,
     ) -> None: ...

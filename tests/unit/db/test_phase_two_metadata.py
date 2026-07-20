@@ -14,6 +14,7 @@ def test_phase_two_metadata_contains_business_loop_tables() -> None:
         "knowledge_candidates",
         "approvals",
         "workflow_executions",
+        "business_object_dependencies",
     }
     assert required <= set(Base.metadata.tables)
 

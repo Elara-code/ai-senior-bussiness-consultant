@@ -37,7 +37,7 @@ dev = [
 packages = ["src/consultant"]
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers --import-mode=importlib"
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 asyncio_mode = "auto"

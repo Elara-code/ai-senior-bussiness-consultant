@@ -33,7 +33,15 @@ async def test_vector_extension_and_required_tables_exist() -> None:
     await engine.dispose()
 
     assert extension == "vector"
-    assert {"projects", "document_chunks", "agent_runs", "citations"} <= tables
+    assert {
+        "projects",
+        "document_chunks",
+        "agent_runs",
+        "citations",
+        "requirement_baselines",
+        "approvals",
+        "business_object_dependencies",
+    } <= tables
 
 
 @pytest.mark.asyncio

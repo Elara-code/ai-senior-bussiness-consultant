@@ -15,9 +15,22 @@ from consultant.ports.business_loop import BusinessObjectRepository
 class InMemoryBusinessObjectRepository:
     def __init__(self) -> None:
         self.history: dict[UUID, list[VersionedBusinessObject]] = {}
+        self.dependencies: dict[UUID, set[UUID]] = {}
 
     async def add(self, item: VersionedBusinessObject) -> None:
+        if item.id in self.history:
+            await self.mark_stale(
+                organization_id=item.organization_id,
+                project_id=item.project_id,
+                item_ids=self.dependencies.get(item.id, set()),
+            )
         self.history.setdefault(item.id, []).append(item.model_copy(deep=True))
+
+    async def save_state(self, item: VersionedBusinessObject) -> None:
+        versions = self.history.get(item.id, [])
+        if not versions or versions[-1].version != item.version:
+            raise NotFound("Business object version not found")
+        versions[-1] = item.model_copy(deep=True)
 
     async def get_latest(
         self,
@@ -67,6 +80,31 @@ class InMemoryBusinessObjectRepository:
             if item is not None:
                 item.stale = True
                 self.history[item_id][-1] = item
+
+    async def link_dependencies(
+        self,
+        *,
+        organization_id: UUID,
+        project_id: UUID,
+        upstream_ids: set[UUID],
+        downstream_id: UUID,
+    ) -> None:
+        downstream = await self.get_latest(
+            organization_id=organization_id,
+            project_id=project_id,
+            item_id=downstream_id,
+        )
+        if downstream is None:
+            raise NotFound("Downstream business object not found")
+        for upstream_id in upstream_ids:
+            upstream = await self.get_latest(
+                organization_id=organization_id,
+                project_id=project_id,
+                item_id=upstream_id,
+            )
+            if upstream is None:
+                raise NotFound("Upstream business object not found")
+            self.dependencies.setdefault(upstream_id, set()).add(downstream_id)
 
 
 class BusinessLoopService:

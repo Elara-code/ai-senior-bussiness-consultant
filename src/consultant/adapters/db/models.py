@@ -434,3 +434,30 @@ class WorkflowExecutionRow(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class BusinessObjectDependencyRow(Base):
+    __tablename__ = "business_object_dependencies"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["organization_id", "project_id"],
+            ["projects.organization_id", "projects.id"],
+            ondelete="CASCADE",
+        ),
+        UniqueConstraint(
+            "organization_id", "project_id", "upstream_id", "downstream_id"
+        ),
+        Index(
+            "ix_business_dependencies_upstream",
+            "organization_id",
+            "project_id",
+            "upstream_id",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    upstream_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    downstream_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

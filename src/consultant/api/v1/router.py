@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from consultant.api.v1.agent_runs import router as agent_runs_router
+from consultant.api.v1.approvals import router as approvals_router
 from consultant.api.v1.business_cases import router as business_cases_router
 from consultant.api.v1.deliverables import router as deliverables_router
 from consultant.api.v1.delivery_plans import router as delivery_plans_router
@@ -22,3 +23,4 @@ router.include_router(scenarios_router)
 router.include_router(business_cases_router)
 router.include_router(proposals_router)
 router.include_router(delivery_plans_router)
+router.include_router(approvals_router)

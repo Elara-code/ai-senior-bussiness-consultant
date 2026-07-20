@@ -8,6 +8,7 @@ from consultant.api.errors import install_error_handlers
 from consultant.api.middleware import install_security_middleware
 from consultant.api.v1.router import router as api_v1_router
 from consultant.application.agent_service import AgentRunService
+from consultant.application.approvals import InMemoryApprovalStore
 from consultant.application.audit import InMemoryAuditLog
 from consultant.application.business_loop import InMemoryBusinessObjectRepository
 from consultant.application.deliverables import InMemoryDeliverableStore
@@ -50,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.state.deliverable_store = InMemoryDeliverableStore()
     application.state.business_object_repository = InMemoryBusinessObjectRepository()
+    application.state.approval_store = InMemoryApprovalStore()
     application.state.audit_log = InMemoryAuditLog()
     application.include_router(api_v1_router)
     install_error_handlers(application)

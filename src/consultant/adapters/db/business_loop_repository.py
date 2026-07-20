@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from consultant.adapters.db.models import (
     BusinessCaseRow,
+    BusinessObjectDependencyRow,
     DeliveryPlanRow,
     KnowledgeCandidateRow,
     ProposalRow,
@@ -14,6 +15,7 @@ from consultant.adapters.db.models import (
     ScenarioAssessmentRow,
 )
 from consultant.domain.business_loop import BusinessObjectKind, VersionedBusinessObject
+from consultant.domain.common import new_id, utc_now
 
 RowType = type[
     RequirementBaselineRow
@@ -39,6 +41,24 @@ class SqlAlchemyBusinessObjectRepository:
         self._session = session
 
     async def add(self, item: VersionedBusinessObject) -> None:
+        if item.version > 1:
+            downstream_ids = set(
+                (
+                    await self._session.scalars(
+                        select(BusinessObjectDependencyRow.downstream_id).where(
+                            BusinessObjectDependencyRow.organization_id
+                            == item.organization_id,
+                            BusinessObjectDependencyRow.project_id == item.project_id,
+                            BusinessObjectDependencyRow.upstream_id == item.id,
+                        )
+                    )
+                ).all()
+            )
+            await self.mark_stale(
+                organization_id=item.organization_id,
+                project_id=item.project_id,
+                item_ids=downstream_ids,
+            )
         row_type = ROWS[item.kind]
         values = dict(
             row_id=UUID(int=(item.id.int + item.version) % (1 << 128)),
@@ -55,6 +75,19 @@ class SqlAlchemyBusinessObjectRepository:
             updated_at=item.updated_at,
         )
         self._session.add(row_type(**values))
+
+    async def save_state(self, item: VersionedBusinessObject) -> None:
+        row_type = ROWS[item.kind]
+        await self._session.execute(
+            update(row_type)
+            .where(
+                row_type.organization_id == item.organization_id,
+                row_type.project_id == item.project_id,
+                row_type.id == item.id,
+                row_type.version == item.version,
+            )
+            .values(status=item.status.value, stale=item.stale, updated_at=item.updated_at)
+        )
 
     async def get_latest(
         self,
@@ -121,6 +154,39 @@ class SqlAlchemyBusinessObjectRepository:
                 )
                 .values(stale=True)
             )
+
+    async def link_dependencies(
+        self,
+        *,
+        organization_id: UUID,
+        project_id: UUID,
+        upstream_ids: set[UUID],
+        downstream_id: UUID,
+    ) -> None:
+        downstream = await self.get_latest(
+            organization_id=organization_id,
+            project_id=project_id,
+            item_id=downstream_id,
+        )
+        if downstream is None:
+            return
+        for upstream_id in upstream_ids:
+            upstream = await self.get_latest(
+                organization_id=organization_id,
+                project_id=project_id,
+                item_id=upstream_id,
+            )
+            if upstream is not None:
+                self._session.add(
+                    BusinessObjectDependencyRow(
+                        id=new_id(),
+                        organization_id=organization_id,
+                        project_id=project_id,
+                        upstream_id=upstream_id,
+                        downstream_id=downstream_id,
+                        created_at=utc_now(),
+                    )
+                )
 
     @staticmethod
     def _to_domain(row: Any, kind: BusinessObjectKind) -> VersionedBusinessObject:

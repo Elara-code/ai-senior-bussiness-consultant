@@ -21,6 +21,7 @@ TABLE_NAMES = (
     "knowledge_candidates",
     "approvals",
     "workflow_executions",
+    "business_object_dependencies",
 )
 
 
