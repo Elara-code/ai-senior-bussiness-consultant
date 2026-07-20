@@ -64,6 +64,18 @@ class AgentRunService:
             if run.status == AgentRunStatus.CANCELLED:
                 return
             self._results[run.id] = result
+            if result.get("requires_approval"):
+                run.checkpoint = {
+                    "completed_step": result.get("completed_step"),
+                    "result_id": result.get("result_id"),
+                }
+                run.transition_to(AgentRunStatus.AWAITING_APPROVAL)
+                await self._publish(
+                    run,
+                    "approval.required",
+                    {"status": run.status.value, "checkpoint": run.checkpoint},
+                )
+                return
             run.transition_to(AgentRunStatus.COMPLETED)
             await self._publish(run, "run.completed", {"status": run.status.value})
         except Exception as error:
@@ -75,6 +87,39 @@ class AgentRunService:
                     {"status": run.status.value, "code": "AGENT_EXECUTION_FAILED"},
                 )
             raise error
+
+    async def publish_plan(self, *, run_id: UUID, steps: list[dict[str, Any]]) -> None:
+        await self._publish(self._require(run_id), "plan.created", {"steps": steps})
+
+    async def publish_step(
+        self, *, run_id: UUID, step_id: str, completed: bool = False
+    ) -> None:
+        await self._publish(
+            self._require(run_id),
+            "step.completed" if completed else "step.started",
+            {"step_id": step_id},
+        )
+
+    async def resume_after_approval(
+        self, *, identity: Identity, run_id: UUID, runner: AgentRunner
+    ) -> None:
+        run = self._require(run_id)
+        self._projects.get_visible(identity=identity, project_id=run.project_id)
+        if run.status != AgentRunStatus.AWAITING_APPROVAL:
+            raise Conflict("Agent run is not awaiting approval")
+        run.transition_to(AgentRunStatus.RUNNING)
+        await self._publish(run, "run.resumed", {"status": run.status.value})
+        try:
+            result = await runner(run.model_copy(deep=True))
+            self._results[run.id] = result
+            run.transition_to(AgentRunStatus.COMPLETED)
+            await self._publish(run, "run.completed", {"status": run.status.value})
+        except Exception:
+            run.transition_to(AgentRunStatus.FAILED)
+            await self._publish(
+                run, "run.failed", {"status": run.status.value, "code": "AGENT_RESUME_FAILED"}
+            )
+            raise
 
     async def cancel(self, *, identity: Identity, run_id: UUID) -> AgentRun:
         run = self._require(run_id)

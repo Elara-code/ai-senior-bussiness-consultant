@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,12 +11,17 @@ from consultant.domain.common import InvalidStateTransition, new_id, utc_now
 class AgentKind(StrEnum):
     REQUIREMENT_ANALYSIS = "requirement_analysis"
     SOLUTION_DESIGN = "solution_design"
+    VALUE_RISK = "value_risk"
+    PROPOSAL = "proposal"
+    DELIVERY = "delivery"
+    KNOWLEDGE = "knowledge"
 
 
 class AgentRunStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
     AWAITING_INPUT = "awaiting_input"
+    AWAITING_APPROVAL = "awaiting_approval"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
@@ -26,12 +32,16 @@ _RUN_TRANSITIONS: dict[AgentRunStatus, frozenset[AgentRunStatus]] = {
     AgentRunStatus.RUNNING: frozenset(
         {
             AgentRunStatus.AWAITING_INPUT,
+            AgentRunStatus.AWAITING_APPROVAL,
             AgentRunStatus.COMPLETED,
             AgentRunStatus.FAILED,
             AgentRunStatus.CANCELLED,
         }
     ),
     AgentRunStatus.AWAITING_INPUT: frozenset(
+        {AgentRunStatus.RUNNING, AgentRunStatus.CANCELLED}
+    ),
+    AgentRunStatus.AWAITING_APPROVAL: frozenset(
         {AgentRunStatus.RUNNING, AgentRunStatus.CANCELLED}
     ),
     AgentRunStatus.COMPLETED: frozenset(),
@@ -51,6 +61,7 @@ class AgentRun(BaseModel):
     objective: str = Field(min_length=1, max_length=4000)
     status: AgentRunStatus = AgentRunStatus.QUEUED
     idempotency_key: str = Field(min_length=8, max_length=255)
+    checkpoint: dict[str, Any] | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

@@ -24,7 +24,9 @@ class ConsultantAgentState(TypedDict, total=False):
     organization_id: str
     project_id: str
     actor_id: str
-    agent_kind: Literal["requirement_analysis", "solution_design"]
+    agent_kind: Literal[
+        "requirement_analysis", "solution_design", "value_risk", "proposal", "delivery", "knowledge"
+    ]
     objective: str
     status: Literal[
         "planning",
@@ -32,6 +34,7 @@ class ConsultantAgentState(TypedDict, total=False):
         "analyzing",
         "reviewing",
         "awaiting_input",
+        "awaiting_approval",
         "completed",
         "failed",
         "cancelled",

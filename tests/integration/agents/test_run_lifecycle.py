@@ -44,3 +44,39 @@ async def test_run_lifecycle_is_idempotent_and_emits_terminal_event() -> None:
     assert first.id == second.id
     assert stored.status == AgentRunStatus.COMPLETED
     assert [event.event_type for event in run_events] == ["run.started", "run.completed"]
+
+
+@pytest.mark.asyncio
+async def test_run_pauses_for_approval_and_resumes_from_checkpoint() -> None:
+    identity = Identity(uuid4(), uuid4(), "Owner")
+    projects = InMemoryProjectStore()
+    project = projects.create(identity=identity, name="Customer")
+    events = InMemoryEventStore()
+    service = AgentRunService(projects=projects, events=events)
+    run, _ = await service.create(
+        identity=identity,
+        project_id=project.id,
+        agent_kind=AgentKind.SOLUTION_DESIGN,
+        objective="Design",
+        idempotency_key="approval-0001",
+    )
+
+    async def pause_runner(run: object) -> dict[str, object]:
+        del run
+        return {"requires_approval": True, "completed_step": "solution", "result_id": "S1"}
+
+    async def resume_runner(run: object) -> dict[str, object]:
+        del run
+        return {"result": "complete"}
+
+    await service.execute(run_id=run.id, runner=pause_runner)
+    paused = service.get_visible(identity=identity, run_id=run.id)
+    assert paused.status == AgentRunStatus.AWAITING_APPROVAL
+    assert paused.checkpoint == {"completed_step": "solution", "result_id": "S1"}
+
+    await service.resume_after_approval(identity=identity, run_id=run.id, runner=resume_runner)
+    emitted = await events.list_after(run_id=run.id, sequence=0)
+    assert service.get_visible(identity=identity, run_id=run.id).status == AgentRunStatus.COMPLETED
+    assert [event.event_type for event in emitted] == [
+        "run.started", "approval.required", "run.resumed", "run.completed"
+    ]
