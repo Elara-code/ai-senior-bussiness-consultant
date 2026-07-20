@@ -321,7 +321,7 @@ class PhaseTwoBusinessRowMixin:
 
     @declared_attr.directive
     def __table_args__(cls) -> tuple[object, ...]:
-        table_name = str(getattr(cls, "__tablename__"))
+        table_name = str(cls.__dict__["__tablename__"])
         return (
             ForeignKeyConstraint(
                 ["organization_id", "project_id"],
