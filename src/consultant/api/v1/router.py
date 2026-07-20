@@ -6,6 +6,7 @@ from consultant.api.v1.business_cases import router as business_cases_router
 from consultant.api.v1.deliverables import router as deliverables_router
 from consultant.api.v1.delivery_plans import router as delivery_plans_router
 from consultant.api.v1.documents import router as documents_router
+from consultant.api.v1.exports import router as exports_router
 from consultant.api.v1.projects import router as projects_router
 from consultant.api.v1.proposals import router as proposals_router
 from consultant.api.v1.requirements import router as requirements_router
@@ -24,3 +25,4 @@ router.include_router(business_cases_router)
 router.include_router(proposals_router)
 router.include_router(delivery_plans_router)
 router.include_router(approvals_router)
+router.include_router(exports_router)
