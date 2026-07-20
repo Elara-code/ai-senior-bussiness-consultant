@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     development_auth_secret: str = Field(default="local-development-only", min_length=16)
     max_upload_bytes: int = Field(default=25 * 1024 * 1024, gt=0)
     auto_execute_jobs: bool = False
+    workflow_provider: Literal["fake", "dify"] = "fake"
+    dify_base_url: str = "http://localhost:5001/v1"
+    dify_api_key: str = ""
+    dify_timeout_seconds: float = Field(default=30, gt=0, le=300)
 
 
 @lru_cache
