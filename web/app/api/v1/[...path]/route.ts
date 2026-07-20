@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server";
+import { developmentToken } from "@/lib/development-auth";
 
 const backend = process.env.CONSULTANT_API_URL ?? "http://localhost:8000";
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  const token = process.env.CONSULTANT_DEV_TOKEN;
+  const token = developmentToken();
   const headers = new Headers();
   for (const name of ["content-type", "if-match", "last-event-id", "idempotency-key"]) {
     const value = request.headers.get(name);

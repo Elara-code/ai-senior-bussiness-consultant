@@ -1,4 +1,22 @@
 services:
+  web:
+    build:
+      context: ./web
+    environment:
+      CONSULTANT_API_URL: http://api:8000
+      CONSULTANT_DEVELOPMENT_AUTH_SECRET: local-compose-development-secret
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
   api:
     build: .
     environment:
@@ -16,6 +34,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     restart: unless-stopped
 
   postgres:

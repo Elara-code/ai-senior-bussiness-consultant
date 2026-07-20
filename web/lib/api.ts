@@ -8,10 +8,12 @@ export type Project = {
   updated_at: string;
 };
 
+import { developmentToken } from "./development-auth";
+
 const API_URL = process.env.CONSULTANT_API_URL ?? "http://localhost:8000";
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = process.env.CONSULTANT_DEV_TOKEN;
+  const token = developmentToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
