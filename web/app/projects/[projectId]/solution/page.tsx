@@ -1,0 +1,2 @@
+import { VersionedEditor } from "../../../../components/versioned-editor";
+export default function SolutionPage() { return <div className="page project-page"><div className="page-title"><div><span className="eyebrow">SOLUTION STUDIO</span><h1>方案工作室</h1></div><span className="status-pill">引用覆盖 96%</span></div><VersionedEditor version={3} initial={"## 执行摘要\n\n建议以知识辅助与回复建议为第一阶段范围，保留人工确认。\n\n## 价值假设\n\n预计处理时长降低 15%–25%。"} /><aside className="quality-strip"><b>质量检查</b><span>✓ 关键事实有引用</span><span>✓ 无新增商业承诺</span><span>△ 1 个参数待确认</span></aside></div>; }

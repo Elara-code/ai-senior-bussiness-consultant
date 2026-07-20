@@ -1,0 +1,2 @@
+import { ApprovalPanel } from "../../../../components/approval-panel";
+export default function ApprovalsPage() { return <div className="page project-page"><div className="page-title"><div><span className="eyebrow">APPROVAL LEDGER</span><h1>成果与审批</h1></div></div><ApprovalPanel /><section className="history"><h2>审批记录</h2><p><b>需求基线 V2</b><span>已批准 · 解决方案负责人 · 2026/07/20</span></p><p><b>场景矩阵 V1</b><span>已批准 · 项目负责人 · 2026/07/20</span></p></section></div>; }
