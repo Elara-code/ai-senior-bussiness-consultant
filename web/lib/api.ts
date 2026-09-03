@@ -8,17 +8,13 @@ export type Project = {
   updated_at: string;
 };
 
-import { developmentToken } from "./development-auth";
-
 const API_URL = typeof window === "undefined" ? (process.env.CONSULTANT_API_URL ?? "http://localhost:8000") : "";
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = developmentToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     cache: "no-store",
