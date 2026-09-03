@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from consultant.adapters.events.memory import InMemoryEventStore
 from consultant.adapters.llm.fake_embeddings import FakeEmbeddingProvider
+from consultant.adapters.workflows.dify import DifyWorkflowRunner
 from consultant.adapters.retrieval.fake_reranker import TokenOverlapReranker
 from consultant.adapters.storage.memory import InMemoryObjectStore
 from consultant.api.errors import install_error_handlers
@@ -37,13 +38,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         object_store=application.state.object_store,
         embeddings=application.state.embedding_provider,
     )
+    workflow_runner = None
+    if active_settings.workflow_provider == "dify" and active_settings.dify_api_key and active_settings.dify_workflow_id:
+        workflow_runner = DifyWorkflowRunner(base_url=active_settings.dify_base_url, api_key=active_settings.dify_api_key, timeout_seconds=active_settings.dify_timeout_seconds)
     application.state.demo_agent_executor = DemoAgentExecutor(
         RetrievalService(
             projects=application.state.project_store,
             catalog=application.state.document_catalog,
             embeddings=application.state.embedding_provider,
             reranker=application.state.reranker,
-        )
+        ), workflow_runner=workflow_runner, workflow_id=active_settings.dify_workflow_id
     )
     application.state.agent_run_service = AgentRunService(
         projects=application.state.project_store,
@@ -65,3 +69,4 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 app = create_app()
+

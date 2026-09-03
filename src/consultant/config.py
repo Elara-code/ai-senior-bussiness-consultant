@@ -25,8 +25,10 @@ class Settings(BaseSettings):
     dify_base_url: str = "http://localhost:5001/v1"
     dify_api_key: str = ""
     dify_timeout_seconds: float = Field(default=30, gt=0, le=300)
+    dify_workflow_id: str = ""
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+

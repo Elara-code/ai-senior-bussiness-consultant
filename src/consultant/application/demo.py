@@ -7,15 +7,26 @@ from consultant.agents.solution_agent import run_solution_agent
 from consultant.application.projects import Identity
 from consultant.application.retrieval import RetrievalHit, RetrievalService
 from consultant.domain.agent_runs import AgentKind, AgentRun
+from consultant.adapters.workflows.dify import DifyWorkflowRunner
+from consultant.ports.workflow import WorkflowRef
 
 
 class DemoAgentExecutor:
     """Deterministic offline executor used by the local demo and CI."""
 
-    def __init__(self, retrieval: RetrievalService) -> None:
+    def __init__(self, retrieval: RetrievalService, workflow_runner: DifyWorkflowRunner | None = None, workflow_id: str = "") -> None:
         self._retrieval = retrieval
+        self._workflow_runner = workflow_runner
+        self._workflow_id = workflow_id
 
     async def __call__(self, run: AgentRun) -> dict[str, Any]:
+        if self._workflow_runner and self._workflow_id:
+            result = await self._workflow_runner.run(
+                workflow=WorkflowRef(workflow_id=self._workflow_id, version="1"),
+                input={"objective": run.objective, "project_id": str(run.project_id), "agent": run.agent_kind.value},
+                idempotency_key=str(run.id),
+            )
+            return {"status": "completed", "dify_execution_id": result.execution_id, "output": result.output, "quality_issues": []}
         identity = Identity(
             organization_id=run.organization_id,
             user_id=run.actor_id,
@@ -101,3 +112,4 @@ class DemoAgentExecutor:
             "draft": draft.model_dump(mode="json") if draft is not None else None,
             "quality_issues": state.get("quality_issues", []),
         }
+
