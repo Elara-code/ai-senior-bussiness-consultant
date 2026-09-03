@@ -10,7 +10,7 @@ export type Project = {
 
 import { developmentToken } from "./development-auth";
 
-const API_URL = process.env.CONSULTANT_API_URL ?? "http://localhost:8000";
+const API_URL = typeof window === "undefined" ? (process.env.CONSULTANT_API_URL ?? "http://localhost:8000") : "";
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = developmentToken();
@@ -28,3 +28,6 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 }
 
 export const listProjects = () => apiFetch<Project[]>("/api/v1/projects");
+export const createProject = (input: Pick<Project, "name" | "description">) =>
+  apiFetch<Project>("/api/v1/projects", { method: "POST", body: JSON.stringify(input) });
+
