@@ -11,7 +11,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <nav aria-label="全局导航">
           <Link className="nav-active" href="/">项目作战室</Link>
-          <span>知识资产</span><span>评测中心</span><span>平台设置</span>
+          <Link href="/projects/demo">项目概览</Link>
+          <Link href="/projects/demo/materials">知识资产</Link>
+          <Link href="/projects/demo/runs">评测中心</Link>
+          <span>平台设置</span>
         </nav>
         <div className="rail-note"><b>证据优先</b><br />每个结论都有来处，每次批准都有记录。</div>
       </aside>
@@ -19,3 +22,4 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
